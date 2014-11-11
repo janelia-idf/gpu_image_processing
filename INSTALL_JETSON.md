@@ -16,7 +16,7 @@ On a host computer ssh into ubuntu@tegra-ubuntu (password: ubuntu):
 ```shell
 sudo apt-get update
 sudo apt-get dist-upgrade -y
-sudo apt-get install bash-completion command-not-found git checkinstall -y
+sudo apt-get install bash-completion command-not-found git -y
 ```
 
 ###Install CUDA for GPU Support
@@ -91,9 +91,99 @@ To uninstall:
 sudo dpkg -r opencv
 ```
 
+###Install ROS
+
+Select UbuntuARM install instructions for the latest ROS release
+(matching Linux 4 Tegra Ubuntu version).
+
+<http://wiki.ros.org/ROS/Installation>
+
+On a host computer ssh into ubuntu@tegra-ubuntu:
+
+```shell
+sudo update-locale LANG=C LANGUAGE=C LC_ALL=C LC_MESSAGES=POSIX
+sudo sh -c 'echo "deb http://packages.namniart.com/repos/ros trusty main" > /etc/apt/sources.list.d/ros-latest.list'
+wget http://packages.namniart.com/repos/namniart.key -O - | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install ros-indigo-ros-base
+sudo apt-get install python-rosdep
+sudo rosdep init
+rosdep update
+echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+sudo apt-get install python-rosinstall
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/src
+catkin_init_workspace
+cd ..
+catkin_make
+source devel/setup.bash
+```
+
 ###Install Point Grey FlyCapture2 Library
 
 Links and instructions for downloading and installing the latest
 FlyCapture2 library from Point Grey for Linux can be found here:
 
 <http://www.ptgrey.com/support/downloads>
+
+Download the latest version of FlyCapture for ARM Hard Float into the
+host computer ~/Downloads directory.
+
+Open a terminal on a host computer and type:
+
+```shell
+scp ~/Downloads/flycapture* ubuntu@tegra-ubuntu:Downloads/.
+```
+
+On a host computer ssh into ubuntu@tegra-ubuntu:
+
+```shell
+cd ~/Downloads
+tar -zxvf flycapture*
+cd flycapture-<version>_arm/lib
+sudo cp libflycapture.so* /usr/lib
+cd ..
+sudo cp -n -r include/* /usr/include
+cd ..
+sudo sh flycap2-conf
+# follow the instructions that the script takes you through
+sudo reboot
+```
+
+On a host computer ssh into ubuntu@tegra-ubuntu:
+
+```shell
+mkdir ~/bin
+mkdir ~/lib
+mkdir ~/flycapture_examples
+cd ~/Downloads/flycapture-<version>_arm/
+cp -r src/* ~/flycapture_examples
+cd ~/flycapture_examples/FlyCapture2Test
+make
+mkdir ~/Pictures/FlyCapture2Test
+# plug in Flea3 camera into USB3 port
+cd ~/Pictures/FlyCapture2Test
+~/bin/FlyCapture2Test
+```
+
+###Install ROS Point Grey Camera Driver
+
+On a host computer ssh into ubuntu@tegra-ubuntu:
+
+```shell
+sudo mkdir /usr/include/flycapture
+sudo ln -s /usr/include/FlyCapture2.h /usr/include/flycapture/FlyCapture2.h
+sudo apt-get install ros-indigo-roslint
+sudo apt-get install ros-indigo-camera-info-manager
+sudo apt-get install ros-indigo-driver-common
+sudo apt-get install ros-indigo-image-proc
+cd ~/catkin_ws/src/
+git clone https://github.com/ros-drivers/pointgrey_camera_driver.git
+cd ..
+catkin_make
+echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+rosrun pointgrey_camera_driver list_cameras
+roslaunch pointgrey_camera_driver camera.launch
+```
